@@ -40,3 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 Dockerfile
+.clj-kondo/.cache/v1/lock
+.lsp/.cache/db.transit.json
+.windsurfrules
