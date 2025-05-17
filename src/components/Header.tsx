@@ -11,10 +11,10 @@ export default function Header() {
           </Link>
           <nav className="space-x-4">
             <Link href="/posts" className="text-gray-600 hover:text-gray-900">
-              글 목록
+              Posts
             </Link>
             <Link href="/about" className="text-gray-600 hover:text-gray-900">
-              소개
+              About
             </Link>
           </nav>
         </div>
