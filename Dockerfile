@@ -1,54 +1,37 @@
-# 1. 단계: 의존성 설치
-FROM node:22-alpine AS deps
+# 1. 빌드 단계
+FROM node:22.2.0-alpine3.19 AS builder
 WORKDIR /app
-
-# 의존성 파일 복사
-COPY package.json package-lock.json* ./
 
 # 의존성 설치
+COPY package.json package-lock.json* ./
 RUN npm ci
 
-# 2. 단계: 애플리케이션 빌드
-FROM node:22-alpine AS builder
-WORKDIR /app
-
-# 의존성 복사
-COPY --from=deps /app/node_modules ./node_modules
+# 소스 복사 및 빌드
 COPY . .
-
-# 환경 변수 설정 (필요시 수정)
-ENV NEXT_TELEMETRY_DISABLED 1
-
-# 프로덕션 빌드 실행
 RUN npm run build
 
-# 3. 단계: 실행 이미지
-FROM node:22-alpine AS runner
+# 2. 실행 단계
+FROM node:22.2.0-alpine3.19
 WORKDIR /app
 
-ENV NODE_ENV production
-ENV NEXT_TELEMETRY_DISABLED 1
+# 환경 변수 설정
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV PORT=3000
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+# 사용자 설정
+RUN addgroup -S nodejs && adduser -S nextjs -G nodejs
 
-# 필요한 파일만 복사
-COPY --from=builder /app/public ./public
-COPY --from=builder /app/package.json ./package.json
-
-# .next/standalone를 사용하여 필요한 파일만 복사
+# 필요한 파일 복사
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+COPY --from=builder /app/public ./public
 
 # 사용자 전환
 USER nextjs
 
-# 포트 설정
+# 포트 노출
 EXPOSE 3000
-
-# 환경 변수 설정 (필요시 수정)
-ENV PORT 3000
-ENV HOSTNAME "0.0.0.0"
 
 # 애플리케이션 실행
 CMD ["node", "server.js"]
